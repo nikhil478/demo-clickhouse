@@ -10,6 +10,14 @@ receivers:
       network: {}
       paging: {}
       processes: {}
+  filelog:
+    include: [ /var/log/access.log ]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.time_local
+          layout: '%Y-%m-%d %H:%M:%S'
 
 exporters:
   otlp:
@@ -26,3 +34,20 @@ service:
     metrics:
       receivers: [hostmetrics]
       exporters: [otlp, debug]
+    logs:
+      receivers: [filelog]
+      processors: [transform, resource]
+      exporters: [otlp, debug]
+
+processors:
+  transform:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.time_unix_nano, log.time_unix_nano + Int("${TIME_SHIFT}"))
+  resource:
+    attributes:
+      - key: service.name
+        value: my-service
+        action: upsert

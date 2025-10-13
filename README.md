@@ -30,3 +30,6 @@ docker run --rm -it \
   --name otel-agent \
   otel/opentelemetry-collector-contrib:latest \
   --config /etc/otelcol-config.yaml
+
+  curl -O https://datasets-documentation.s3.eu-west-3.amazonaws.com/http_logs/access-structured_16k_lines.log
+  
