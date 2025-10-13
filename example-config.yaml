@@ -1,0 +1,28 @@
+receivers:
+  hostmetrics:
+    collection_interval: 1s
+    scrapers:
+      load: {}
+      disk: {}
+      cpu: {}
+      filesystem: {}
+      memory: {}
+      network: {}
+      paging: {}
+      processes: {}
+
+exporters:
+  otlp:
+    endpoint: host.docker.internal:4317
+    headers:
+      authorization: <YOUR_INGESTION_KEY>
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      exporters: [otlp, debug]
