@@ -1,0 +1,53 @@
+receivers:
+  hostmetrics:
+    collection_interval: 1s
+    scrapers:
+      load: {}
+      disk: {}
+      cpu: {}
+      filesystem: {}
+      memory: {}
+      network: {}
+      paging: {}
+      processes: {}
+  filelog:
+    include: [ /var/log/access.log ]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.time_local
+          layout: '%Y-%m-%d %H:%M:%S'
+
+exporters:
+  otlp:
+    endpoint: host.docker.internal:4317
+    headers:
+      authorization: 9f87fe1c-51c5-4529-ae28-1fa5d027b221
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics]
+      exporters: [otlp, debug]
+    logs:
+      receivers: [filelog]
+      processors: [transform, resource]
+      exporters: [otlp, debug]
+
+processors:
+  transform:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.time_unix_nano, log.time_unix_nano + Int("${TIME_SHIFT}"))
+  resource:
+    attributes:
+      - key: service.name
+        value: my-service
+        action: upsert
